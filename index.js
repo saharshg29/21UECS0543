@@ -11,28 +11,23 @@ let sum = 0;
 
 // Function to calculate average
 const calculateAverage = () => {
-    if (numbers.length === 0) {
-        return 0; // Return 0 if there are no numbers
-    }
-    console.log({ sum, numbers })
     return sum / numbers.length;
 };
 
-const fetchNumbers = async (url) => {
+// Middleware to fetch numbers from test server
+const fetchNumbers = async () => {
     try {
         const config = {
             headers: {
-                Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE0NTQ1NjUxLCJpYXQiOjE3MTQ1NDUzNTEsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6IjkxYmEzNTVjLTZmM2QtNGY2NS04MjRiLTNlNTAwMjE5NGM4MSIsInN1YiI6InZ0dUBnbWFpbC5jb20ifSwiY29tcGFueU5hbWUiOiJ0ZXN0aWZ5IiwiY2xpZW50SUQiOiI5MWJhMzU1Yy02ZjNkLTRmNjUtODI0Yi0zZTUwMDIxOTRjODEiLCJjbGllbnRTZWNyZXQiOiJSV29KakZTRk1wb3l5UkZJIiwib3duZXJOYW1lIjoidGVzdGlmeSIsIm93bmVyRW1haWwiOiJ2dHVAZ21haWwuY29tIiwicm9sbE5vIjoiMTkxOTUifQ.37bCUmX4Ad83rOcemsACT0Gkc7FdpYTHUcRhlTQpm7I'
+                Authorization: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE0NTQyOTIxLCJpYXQiOjE3MTQ1NDI2MjEsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6ImNhNDNiOWZiLTkwM2MtNGVmNS04MmQ2LWM1ZDAxZTUzZjA5ZCIsInN1YiI6InZ0dTE5NjIyQHZlbHRlY2guZWR1LmluIn0sImNvbXBhbnlOYW1lIjoiWFlaLmNvbSIsImNsaWVudElEIjoiY2E0M2I5ZmItOTAzYy00ZWY1LTgyZDYtYzVkMDFlNTNmMDlkIiwiY2xpZW50U2VjcmV0IjoiQmVheU1IdWJNZFRkaEtqcSIsIm93bmVyTmFtZSI6IlVqamF3YWwgS3VtYXIiLCJvd25lckVtYWlsIjoidnR1MTk2MjJAdmVsdGVjaC5lZHUuaW4iLCJyb2xsTm8iOiIyMVVFQ1MwNjM4In0.yoqJO70lY5aOkOegY0FhW6FP7QG_UGktkJKwm1Xha24'
             }
         };
-        const response = await fetch(url, config);
-        const responseData = await response.json();
-        console.log(responseData);
-        const newNumber = responseData.number;
+        const response = await axios.get('http://test-server-api/numbers', config);
+        const newNumber = response.data.number;
         if (!numbers.includes(newNumber)) {
             // Add new number to the list
             numbers.push(newNumber);
-            sum += parseInt(newNumber);
+            sum += newNumber;
             // If window size is exceeded, remove oldest number
             if (numbers.length > windowSize) {
                 const removedNumber = numbers.shift();
@@ -45,29 +40,11 @@ const fetchNumbers = async (url) => {
 };
 
 // Middleware to handle requests
-app.get('/numbers/:type', async (req, res) => {
+app.use('/:numberid', async (req, res) => {
     try {
-        const { type } = req.params;
-        let url;
-        switch (type) {
-            case 'p':
-                url = 'http://20.244.56.144/test/primes';
-                break;
-            case 'e':
-                url = 'http://20.244.56.144/test/even';
-                break;
-            case 'f':
-                url = 'http://20.244.56.144/test/fibo';
-                break;
-            case 'r':
-                url = 'http://20.244.56.144/test/rand';
-                break;
-            default:
-                res.status(404).json({ error: 'Invalid type' });
-                return;
-        }
+        const { numberid } = req.params;
         // Fetch numbers from test server
-        await fetchNumbers(url);
+        await fetchNumbers();
         // Calculate average
         const average = calculateAverage();
         // Prepare response
@@ -83,7 +60,6 @@ app.get('/numbers/:type', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // // GET /companies/:companyName/categories/:categoryName/products/:productType
 app.get('/companies/:companyName/categories/:categoryName/products/:productType', async (req, res) => {
     try {
