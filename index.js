@@ -1,5 +1,6 @@
 const express = require('express');
-const axios = require('axios');
+const axios = require("axios")
+// const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,19 +18,17 @@ const calculateAverage = () => {
     return sum / numbers.length;
 };
 
-
-
-const fetchNumbers = async () => {
+const fetchNumbers = async (url) => {
     try {
         const config = {
             headers: {
-                Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE0NTQ0NDY3LCJpYXQiOjE3MTQ1NDQxNjcsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6ImE5YjFjYWNhLTViMDEtNDYxOS04ZGMwLTIxOGRkMWNiMDcwYyIsInN1YiI6ImdhbWVyamlndXB0QGdtYWlsLmNvbSJ9LCJjb21wYW55TmFtZSI6Ikd1cHRhIE1lZGljcyIsImNsaWVudElEIjoiYTliMWNhY2EtNWIwMS00NjE5LThkYzAtMjE4ZGQxY2IwNzBjIiwiY2xpZW50U2VjcmV0IjoiZkpQYkpoTE9UTXpxaGpoVSIsIm93bmVyTmFtZSI6IlNhaGFyc2ggR3VwdGEiLCJvd25lckVtYWlsIjoiZ2FtZXJqaWd1cHRAZ21haWwuY29tIiwicm9sbE5vIjoiMTkxMTAifQ.uahErv5lt9f5iZ4lqfo9dDSPqBZ9RpGqW_VPR5Qy8qQ'
+                Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE0NTQ1NjUxLCJpYXQiOjE3MTQ1NDUzNTEsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6IjkxYmEzNTVjLTZmM2QtNGY2NS04MjRiLTNlNTAwMjE5NGM4MSIsInN1YiI6InZ0dUBnbWFpbC5jb20ifSwiY29tcGFueU5hbWUiOiJ0ZXN0aWZ5IiwiY2xpZW50SUQiOiI5MWJhMzU1Yy02ZjNkLTRmNjUtODI0Yi0zZTUwMDIxOTRjODEiLCJjbGllbnRTZWNyZXQiOiJSV29KakZTRk1wb3l5UkZJIiwib3duZXJOYW1lIjoidGVzdGlmeSIsIm93bmVyRW1haWwiOiJ2dHVAZ21haWwuY29tIiwicm9sbE5vIjoiMTkxOTUifQ.37bCUmX4Ad83rOcemsACT0Gkc7FdpYTHUcRhlTQpm7I'
             }
         };
-        const response = await fetch('http://20.244.56.144/test/even', config);
+        const response = await fetch(url, config);
         const responseData = await response.json();
         console.log(responseData);
-        const newNumber = responseData.numbers;
+        const newNumber = responseData.number;
         if (!numbers.includes(newNumber)) {
             // Add new number to the list
             numbers.push(newNumber);
@@ -45,13 +44,30 @@ const fetchNumbers = async () => {
     }
 };
 
-
 // Middleware to handle requests
-app.use('/:numberid', async (req, res) => {
+app.get('/numbers/:type', async (req, res) => {
     try {
-        const { numberid } = req.params;
+        const { type } = req.params;
+        let url;
+        switch (type) {
+            case 'p':
+                url = 'http://20.244.56.144/test/primes';
+                break;
+            case 'e':
+                url = 'http://20.244.56.144/test/even';
+                break;
+            case 'f':
+                url = 'http://20.244.56.144/test/fibo';
+                break;
+            case 'r':
+                url = 'http://20.244.56.144/test/rand';
+                break;
+            default:
+                res.status(404).json({ error: 'Invalid type' });
+                return;
+        }
         // Fetch numbers from test server
-        await fetchNumbers();
+        await fetchNumbers(url);
         // Calculate average
         const average = calculateAverage();
         // Prepare response
@@ -63,11 +79,39 @@ app.use('/:numberid', async (req, res) => {
         };
         res.json(response);
     } catch (error) {
-        console.log("Error occured")
         console.error('Error processing request:', error.message);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// // GET /companies/:companyName/categories/:categoryName/products/:productType
+app.get('/companies/:companyName/categories/:categoryName/products/:productType', async (req, res) => {
+    try {
+        const { companyName, categoryName, productType } = req.params;
+        const { top, minPrice, maxPrice } = req.query;
+        const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNYXBDbGFpbXMiOnsiZXhwIjoxNzE0NTQ1NjUxLCJpYXQiOjE3MTQ1NDUzNTEsImlzcyI6IkFmZm9yZG1lZCIsImp0aSI6IjkxYmEzNTVjLTZmM2QtNGY2NS04MjRiLTNlNTAwMjE5NGM4MSIsInN1YiI6InZ0dUBnbWFpbC5jb20ifSwiY29tcGFueU5hbWUiOiJ0ZXN0aWZ5IiwiY2xpZW50SUQiOiI5MWJhMzU1Yy02ZjNkLTRmNjUtODI0Yi0zZTUwMDIxOTRjODEiLCJjbGllbnRTZWNyZXQiOiJSV29KakZTRk1wb3l5UkZJIiwib3duZXJOYW1lIjoidGVzdGlmeSIsIm93bmVyRW1haWwiOiJ2dHVAZ21haWwuY29tIiwicm9sbE5vIjoiMTkxOTUifQ.37bCUmX4Ad83rOcemsACT0Gkc7FdpYTHUcRhlTQpm7I';
+
+        // Constructing headers with the bearer token
+        const headers = {
+            'Authorization': `Bearer ${bearerToken}`
+        };
+
+        const response = await axios.get(`http://20.244.56.144/test/companies/${companyName}/categories/${categoryName}/products/${productType}`, {
+            params: {
+                top,
+                minPrice,
+                maxPrice
+            },
+            headers: headers
+        });
+
+        res.json(response.data.products);
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 
 // Start the server
 app.listen(PORT, () => {
